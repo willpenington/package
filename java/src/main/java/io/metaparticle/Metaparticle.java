@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 
 import io.metaparticle.annotations.Package;
+import io.metaparticle.annotations.PackageFile;
 import io.metaparticle.annotations.Runtime;
 import static io.metaparticle.Util.handleErrorExec;
 import static io.metaparticle.Util.once;
@@ -65,12 +66,24 @@ public class Metaparticle {
     }
 
     public static void writeDockerfile(String className, Package p, String projectName) throws IOException {
-        String contents = 
-"FROM openjdk:8-jre-alpine\n" +
-"COPY %s /main.jar\n" +
-"CMD java -classpath /main.jar %s";
-        byte[] output = 
-            String.format(contents, p.jarFile(), className).getBytes();
+        StringBuilder dockerfile = new StringBuilder();
+        dockerfile.append("FROM openjdk:8-jre-alpine\n");
+
+        for (PackageFile packageFile : p.additionalFiles()) {
+            dockerfile.append("COPY ");
+            dockerfile.append(packageFile.src());
+            dockerfile.append(' ');
+            dockerfile.append(packageFile.path());
+            dockerfile.append('\n');
+        }
+
+        dockerfile.append("COPY ");
+        dockerfile.append(p.jarFile());
+        dockerfile.append(" /main.jar\n");
+        dockerfile.append("CMD java -classpath /main.jar ");
+        dockerfile.append(className);
+
+        byte[] output = dockerfile.toString().getBytes();
         Files.write(Paths.get("Dockerfile"), output);
     }
 

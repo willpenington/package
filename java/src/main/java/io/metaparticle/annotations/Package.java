@@ -18,4 +18,6 @@ public @interface Package {
     boolean publish() default false;
 
     String jarFile() default "";
+
+    PackageFile[] additionalFiles() default {};
 }
